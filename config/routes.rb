@@ -6,4 +6,6 @@ Router.draw do
   get('/') { erb.result(binding) }
   get('/articles') { 'All Articles' }
   get('/articles/1') { 'First Article' }
+
+  get 'articles/index'
 end
