@@ -21,11 +21,12 @@ class Router
       @routes[path] = blk
     else
       if path.include? '/' # 'articles/index'
-        controller, action = path.split('/') # 'articles', 'index'
-        controller_klass_name = controller.capitalize + 'Controller' # 'ArticlesController'
-        controller_klass = Object.const_get(controller_klass_name) # ArticlesController
-        @routes[path.prepend('/')] = ->(env) {
-          controller_klass.new(env).send(action.to_sym) # ArticlesController.new(env).index
+        @routes['/' + path] = ->(env) {
+          controller_name, action_name = path.split('/') # 'articles', 'index'
+          controller_klass = constantize_controller(controller_name) # ArticlesController
+          controller = controller_klass.new(env)
+          controller.send(action_name.to_sym) # ArticlesController.new(env).index
+          controller.render("views/#{controller_name}/#{action_name}.html.erb")
         }
       end
     end
@@ -35,5 +36,14 @@ class Router
     path = env['REQUEST_PATH']
     handler = @routes[path] || ->(env) { "no route found for #{path}" }
     handler.call(env)
+  end
+
+  private
+
+  # input: 'articles'
+  # output: ArticlesController
+  def constantize_controller(name)
+    controller_klass_name = name.capitalize + 'Controller'
+    Object.const_get(controller_klass_name)
   end
 end
